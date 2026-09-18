@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Malla Reddy College - AI Campus Assistant</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fdf2f2',
+                            100: '#fde8e8',
+                            500: '#991b1b', // Maroon
+                            600: '#7f1d1d',
+                            700: '#651010',
+                            800: '#450a0a',
+                            gold: '#d97706',
+                            goldLight: '#fef3c7'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(230, 225, 225, 0.05);
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(153, 27, 27, 0.3);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(153, 27, 27, 0.6);
+        }
+
+        .chat-bubble-ai {
+            border-bottom-left-radius: 4px;
+        }
+        .chat-bubble-user {
+            border-bottom-right-radius: 4px;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .pulse-active {
+            animation: pulse-ring 2s infinite ease-in-out;
+        }
+            /* College Logo Watermark Background */
+            .chat-background {
+            position: relative;
+            background-color: #0f172a;
+            overflow: hidden;
+        }
+
+        .chat-background::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: url("mrdulogo.png");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 420px;
+            opacity: 0.10;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .chat-background > * {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 h-full flex flex-col antialiased selection:bg-red-900 selection:text-white">
+
+    <!-- Navigation Header -->
+    <header class="bg-slate-800/90 backdrop-blur border-b border-slate-700/60 sticky top-0 z-30 px-4 py-3 flex items-center justify-between shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-md ring-2 ring-amber-500/30 overflow-hidden">
+                <img src="mallareddy.png"
+                    alt="Malla Reddy University Logo"
+                    class="w-full h-full object-contain p-1">
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="font-bold text-lg text-slate-100 tracking-wide">MRDU Campus AI Agent</h1>
+                    <!-- <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Gemini 3 Powered
+                    </span> -->
+                </div>
+                <p class="text-xs text-slate-400">Malla Reddy Deemed University <span class="text-amber-400 font-semibold">(MRDU)</span></p>
+            </div>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="flex items-center space-x-2 sm:space-x-3">
+            <!-- Web Search Grounding Toggle -->
+            <button id="groundingToggleBtn" onclick="toggleGrounding()" title="Toggle Live Web Search Grounding" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700/80 hover:bg-slate-700 text-slate-300 border border-slate-600 flex items-center gap-2 transition-all">
+                <i class="fa-solid fa-globe text-emerald-400" id="groundingIcon"></i>
+                <span class="hidden sm:inline">Live Web Search:</span>
+                <span id="groundingStatus" class="font-bold text-emerald-400">ON</span>
+            </button>
+
+            <!-- Info Drawer Toggle for Mobile -->
+            <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-lg bg-slate-700 text-slate-300 hover:text-white">
+                <i class="fa-solid fa-circle-info text-base"></i>
+                <!-- <img src="mrdulogo.png"
+                    alt="Malla Reddy University Logo"
+                    class="w-full h-full object-contain p-1"> -->
+            </button>
+
+            <!-- Reset Chat -->
+            <button onclick="clearChat()" title="Clear Conversation" class="p-2 rounded-lg bg-slate-700/60 hover:bg-red-900/50 hover:text-red-300 text-slate-400 transition-colors">
+                <i class="fa-solid fa-trash-can text-sm"></i>
+                 <!-- <img src="mrdulogo.png"
+                    alt="Malla Reddy University Logo"
+                    class="w-full h-full object-contain p-1"> -->
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <div class="flex-1 flex overflow-hidden relative max-w-7xl w-full mx-auto">
+
+        <!-- Left Chat Section -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative chat-background">
+            
+            <!-- Quick Chips Bar -->
+            <div class="bg-slate-800/40 border-b border-slate-800 px-4 py-2 flex items-center gap-2 overflow-x-auto text-xs no-scrollbar">
+                <span class="text-slate-400 font-medium shrink-0 flex items-center gap-1">
+                    <i class="fa-solid fa-bolt text-amber-400"></i> Quick Ask:
+                </span>
+                <button onclick="sendQuickPrompt('What undergraduate, postgraduate and B.Tech specializations are offered at Malla Reddy University (MRDU)?')" class="shrink-0 bg-slate-800 hover:bg-red-900/40 hover:border-red-700/60 border border-slate-700 text-slate-300 px-3 py-1 rounded-full transition-all">
+                    📚 MRDU Programs
+                </button>
+                <button onclick="sendQuickPrompt('What are the TG EAPCET / EAMCET ranks, MRUET entrance test details, and admission eligibility criteria for MRDU?')" class="shrink-0 bg-slate-800 hover:bg-red-900/40 hover:border-red-700/60 border border-slate-700 text-slate-300 px-3 py-1 rounded-full transition-all">
+                    🎯 Admission & Cutoffs
+                </button>
+                <button onclick="sendQuickPrompt('Tell me about recent placement statistics, top recruiters and highest packages at Malla Reddy University (MRDU).')" class="shrink-0 bg-slate-800 hover:bg-red-900/40 hover:border-red-700/60 border border-slate-700 text-slate-300 px-3 py-1 rounded-full transition-all">
+                    💼 Placement Highlights
+                </button>
+                <button onclick="sendQuickPrompt('What are the hostel, sports, laboratory and campus facilities available at Malla Reddy University (MRDU)?')" class="shrink-0 bg-slate-800 hover:bg-red-900/40 hover:border-red-700/60 border border-slate-700 text-slate-300 px-3 py-1 rounded-full transition-all">
+                    🏛️ Campus Facilities
+                </button>
+                <button onclick="sendQuickPrompt('Provide contact details, official email, phone numbers and exact location of Malla Reddy University (MRDU).')" class="shrink-0 bg-slate-800 hover:bg-red-900/40 hover:border-red-700/60 border border-slate-700 text-slate-300 px-3 py-1 rounded-full transition-all">
+                    📍 Location & Contact
+                </button>
+            </div>
+
+            <!-- Chat Container -->
+            <div id="chatContainer" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                
+                <!-- Welcome Card -->
+                <div id="welcomeCard" class="bg-gradient-to-br from-slate-800 via-slate-800/90 to-red-950/40 border border-slate-700/70 rounded-2xl p-5 sm:p-6 shadow-xl mb-6">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-red-900/80 border border-red-500/40 flex items-center justify-center shrink-0 shadow-lg text-amber-400 text-xl">
+                            <!-- <i class="fa-solid fa-robot"></i> -->
+                            <img src="mrdulogo.png"
+                                alt="Malla Reddy University Logo"
+                                class="w-full h-full object-contain p-1">
+                        </div>
+                        <div class="space-y-2">
+                            <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                                Namaste! Welcome to Malla Reddy Deemed University (MRDU) AI Concierge 🎓
+                            </h2>
+                            <p class="text-sm text-slate-300 leading-relaxed">
+                                I am your dedicated AI assistant for <strong class="text-amber-400">Malla Reddy Deemed University (MRDU)</strong>. Ask me anything about engineering, agricultural sciences, allied health, management, MRUET entrance test, fee structure, placement drives, hostel life, or campus events.
+                            </p>
+                            
+                            <div class="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                <div class="p-2.5 rounded-lg bg-slate-900/50 border border-slate-700/50 flex items-center gap-2">
+                                    <i class="fa-solid fa-certificate text-amber-400 text-sm"></i>
+                                    <span>Private University • UGC Recognized</span>
+                                </div>
+                                <div class="p-2.5 rounded-lg bg-slate-900/50 border border-slate-700/50 flex items-center gap-2">
+                                    <i class="fa-solid fa-map-location-dot text-emerald-400 text-sm"></i>
+                                    <span>Maisammaguda, Dhulapally, Hyderabad</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat history items appended dynamically -->
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-3 sm:p-4 bg-slate-800/80 border-t border-slate-700/80 backdrop-blur">
+                
+                <!-- Audio Feedback Bar (if TTS is playing) -->
+                <div id="audioPlayerStatus" class="hidden mb-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-center justify-between text-xs text-amber-300">
+                    <span class="flex items-center gap-2">
+                        <i class="fa-solid fa-volume-high animate-bounce text-amber-400"></i> Speaking answer...
+                    </span>
+                    <button onclick="stopAudio()" class="hover:underline font-bold text-red-400">Stop Voice</button>
+                </div>
+
+                <form id="chatForm" onsubmit="handleFormSubmit(event)" class="relative flex items-end gap-2">
+                    <div class="flex-1 bg-slate-900 border border-slate-700 focus-within:border-amber-500/80 rounded-2xl shadow-inner overflow-hidden transition-all flex items-center">
+                        <textarea 
+                            id="userInput" 
+                            rows="1" 
+                            placeholder="Ask about admissions, fees, placements, courses..." 
+                            class="w-full bg-transparent px-4 py-3 text-sm text-slate-100 placeholder-slate-400 focus:outline-none resize-none max-h-32"
+                            onkeydown="handleKeyDown(event)"
+                        ></textarea>
+                        
+                        <!-- Voice Input Microphone Button -->
+                        <button type="button" id="micBtn" onclick="toggleSpeechRecognition()" title="Voice Input" class="p-2.5 mr-1 text-slate-400 hover:text-amber-400 rounded-xl transition-colors">
+                            <i class="fa-solid fa-microphone text-base" id="micIcon"></i>
+                        </button>
+                    </div>
+
+                    <!-- Voice TTS Audio toggle checkbox button
+                    <button type="button" id="ttsToggleBtn" onclick="toggleTTS()" title="Auto-speak response" class="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 transition-colors">
+                        <i class="fa-solid fa-volume-xmark text-base" id="ttsIcon"></i>
+                    </button> -->
+
+                    <!-- Send Button -->
+                    <button type="submit" id="sendBtn" class="p-3 bg-gradient-to-r from-red-800 to-amber-600 hover:from-red-700 hover:to-amber-500 text-white rounded-2xl shadow-lg shadow-red-950/50 font-medium flex items-center justify-center transition-all disabled:opacity-50">
+                        <i class="fa-solid fa-paper-plane text-base"></i>
+                    </button>
+                </form>
+                <div class="mt-2 text-[11px] text-slate-500 text-center">
+                    Info based on official MRDU dataset & real-time search.
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Sidebar (Campus Directory & Quick Facts) -->
+        <aside id="sidebar" class="w-80 bg-slate-800/90 border-l border-slate-700/70 p-4 overflow-y-auto space-y-6 hidden md:block absolute md:relative right-0 top-0 bottom-0 z-20 shadow-2xl md:shadow-none transition-all">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-700">
+                <h3 class="font-bold text-slate-200 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-building-columns text-amber-400"></i> MRDU Quick Overview
+                </h3>
+                <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- College Highlights Card -->
+            <div class="bg-slate-900/70 border border-slate-700/60 rounded-xl p-3.5 space-y-2.5">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
+                    <h4 class="font-semibold text-xs text-amber-300">Key Accreditations & Status</h4>
+                </div>
+                <ul class="text-xs text-slate-300 space-y-1.5 list-disc list-inside">
+                    <li><strong>State Private University</strong></li>
+                    <li><strong>UGC Established</strong> under Telangana Act</li>
+                    <li>Industry-aligned curriculum & <strong>Green Campus</strong></li>
+                    <li>Next-gen Specializations (AI/ML, Cyber Security, IoT, Data Science)</li>
+                </ul>
+            </div>
+
+            <!-- EAMCET & Counseling Details -->
+            <div class="bg-slate-900/70 border border-slate-700/60 rounded-xl p-3.5 space-y-2 text-xs">
+                <h4 class="font-semibold text-amber-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-hashtag text-slate-400"></i> Admission Codes
+                </h4>
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <!-- <div class="bg-slate-800 p-2 rounded border border-slate-700 text-center">
+                        <span class="text-slate-400 block text-[10px]">TG EAPCET / EAMCET</span>
+                        <strong class="text-amber-400 text-sm">MRDU / MREC</strong>
+                    </div> -->
+                    <div class="bg-slate-800 p-2 rounded border border-slate-700 text-center">
+                        <span class="text-slate-400 block text-[10px]">University Test</span>
+                        <strong class="text-amber-400 text-sm">MRUET</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placement Stats Quick Cards -->
+            <div class="space-y-2">
+                <h4 class="font-semibold text-xs text-slate-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-briefcase text-emerald-400"></i> Placements Snapshot
+                </h4>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
+                        <span class="text-slate-400 text-[10px] block">Highest Package</span>
+                        <span class="text-emerald-400 font-bold text-base">₹38 LPA+</span>
+                    </div>
+                    <div class="bg-amber-950/40 border border-amber-800/40 p-2.5 rounded-xl">
+                        <span class="text-slate-400 text-[10px] block">Offers Placed</span>
+                        <span class="text-amber-400 font-bold text-base">1500+</span>
+                    </div>
+                </div>
+                <div class="text-[11px] text-slate-400 pt-1">
+                    Top recruiters: TCS, HCL, Infosys, Cognizant, Wipro, Tabluera, Accenture, Deloitte, Value Momentom, Zero Code.
+                </div>
+            </div>
+
+            <!-- Contact & Helpline Section -->
+            <div class="bg-slate-900/70 border border-slate-700/60 rounded-xl p-3.5 space-y-2 text-xs">
+                <h4 class="font-semibold text-amber-300 flex items-center gap-1.5">
+                    <i class="fa-solid fa-headset text-slate-400"></i> Admission Helpline
+                </h4>
+                <div class="space-y-1.5 text-slate-300">
+                    <p class="flex items-center gap-2">
+                        <i class="fa-solid fa-phone text-emerald-400 w-4"></i> +91 7207034237 / 9348161222
+                    </p>
+                    <p class="flex items-center ga.p-2">
+                        <i class="fa-solid fa-envelope text-amber-400 w-4"></i>  mrdu@university.ac.in
+                    </p>
+                    <p class="flex items-start gap-2 pt-1">
+                        <i class="fa-solid fa-location-dot text-red-400 w-4 mt-0.5 shrink-0"></i> 
+                        <span>Maisammaguda, Dhulapally, Kompally, Secunderabad, Telangana 500100</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Grounding Sources Panel -->
+            <div id="sourcesContainer" class="hidden bg-slate-900/80 border border-emerald-900/50 rounded-xl p-3 text-xs space-y-2">
+                <h4 class="font-semibold text-emerald-400 flex items-center gap-1.5">
+                    <i class="fa-solid fa-link"></i> Information Grounding Sources
+                </h4>
+                <ul id="sourcesList" class="space-y-1.5 text-slate-300">
+                    <!-- Populated dynamically when search grounding returns citations -->
+                </ul>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // Global State
+        const apiKey = "AQ.Ab8RN6Lx1r9AkCkpzTNdDy285dlLOtHyKB08X3KPWHZMsL05zg"; // Gemini API Key populated by environment in runtime
+        let isGroundingEnabled = false;
+        let isTTSEnabled = false;
+        let conversationHistory = [];
+        let isGenerating = false;
+        let currentAudio = null;
+        let speechRecognition = null;
+
+        // System Instruction defining MRDU agent's persona & comprehensive knowledge
+        const SYSTEM_INSTRUCTION = `
+You are the official AI Campus Concierge and Admissions Assistant for Malla Reddy University (MRDU), located in Maisammaguda, Dhulapally, Secunderabad / Hyderabad, Telangana, India.
+
+Your Goal: Provide warm, accurate, respectful, and highly informative responses to students, parents, faculty, and alumni.
+
+Key Institutional Details to always rely on:
+1. Institution Name: Malla Reddy University (MRDU).
+2. Founder / Chairman: Ch. Malla Reddy (Prominent educationist, founder of Malla Reddy Group of Institutions).
+3. Status: Recognized Private University established under Telangana State Private Universities Act & UGC recognized.
+4. Admission Criteria: Admission through TG EAPCET / TS EAMCET, JEE Main, MRUET (Malla Reddy University Entrance Test), or merit marks.
+5. Schools & Offered Programs at MRDU:
+   - School of Engineering: B.Tech in CSE, AI & ML, Data Science, Cyber Security, Cloud Computing, IoT, ECE, Mechanical, Civil, IT.
+   - School of Agricultural Sciences: B.Sc. (Hons) Agriculture.
+   - School of Allied Health Sciences: B.Sc. Anesthesia Tech, Medical Lab Tech, Radiology, Physiotherapy (BPT), Nursing, Cardiac Technology.
+   - School of Management & Commerce: BBA (Business Analytics, Digital Marketing), MBA (HR, Finance, Marketing, Supply Chain).
+   - School of Sciences: B.Sc. / M.Sc. Data Science, Biotechnology, Cyber Security.
+6. Postgraduate Programs: M.Tech, MBA, M.Sc.
+7. Location & Address: Maisammaguda, Dhulapally, Kompally, Secunderabad/Hyderabad, Telangana 500100.
+8. Placements & Career Cell: 100+ top visiting recruiters including Amazon, TCS, Cognizant, Wipro, Accenture, Capgemini, Virtusa, Infosys, Tech Mahindra. Highest packages around 30 to 38+ LPA, average packages around 4.5 to 6 LPA.
+9. Campus Facilities: Modern laboratories, AI & Robotics Centers, digital central library, high-speed Wi-Fi, separate hostel facilities for boys & girls, sports facilities (cricket ground, basketball, badminton), cafeteria, transport buses covering Hyderabad & Secunderabad.
+10. Tone: Polite, professional, encouraging, enthusiastic, structured with bullet points or formatted sections when helpful. Use a polite Indian greeting like "Namaste!" or "Hello!" where appropriate.
+
+If asked about real-time updates or specific latest events, fee structures, or notifications, provide the clear answer and reference official site mallareddyuniversity.ac.in when relevant.
+`;
+
+        // Initialize Speech Recognition if supported
+        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            speechRecognition = new SpeechRec();
+            speechRecognition.continuous = false;
+            speechRecognition.interimResults = false;
+            speechRecognition.lang = 'en-IN';
+
+            speechRecognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('userInput').value = transcript;
+                stopMicUI();
+            };
+
+            speechRecognition.onerror = () => {
+                stopMicUI();
+            };
+
+            speechRecognition.onend = () => {
+                stopMicUI();
+            };
+        }
+
+        function toggleGrounding() {
+            isGroundingEnabled = !isGroundingEnabled;
+            const statusEl = document.getElementById('groundingStatus');
+            const iconEl = document.getElementById('groundingIcon');
+            if (isGroundingEnabled) {
+                statusEl.innerText = 'ON';
+                statusEl.className = 'font-bold text-emerald-400';
+                iconEl.className = 'fa-solid fa-globe text-emerald-400';
+            } else {
+                statusEl.innerText = 'OFF';
+                statusEl.className = 'font-bold text-slate-400';
+                iconEl.className = 'fa-solid fa-globe-slash text-slate-400';
+            }
+        }
+
+        function toggleTTS() {
+            isTTSEnabled = !isTTSEnabled;
+            const ttsIcon = document.getElementById('ttsIcon');
+            const ttsBtn = document.getElementById('ttsToggleBtn');
+            if (isTTSEnabled) {
+                ttsIcon.className = 'fa-solid fa-volume-high text-amber-400';
+                ttsBtn.className = 'p-3 rounded-2xl bg-amber-500/20 border border-amber-500/50 text-amber-300 transition-colors';
+            } else {
+                ttsIcon.className = 'fa-solid fa-volume-xmark text-slate-400';
+                ttsBtn.className = 'p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 transition-colors';
+                stopAudio();
+            }
+        }
+
+        function toggleSpeechRecognition() {
+            if (!speechRecognition) {
+                alert('Speech recognition is not supported in this browser.');
+                return;
+            }
+            const micIcon = document.getElementById('micIcon');
+            const micBtn = document.getElementById('micBtn');
+
+            if (micBtn.classList.contains('listening')) {
+                speechRecognition.stop();
+                stopMicUI();
+            } else {
+                speechRecognition.start();
+                micBtn.classList.add('listening');
+                micIcon.className = 'fa-solid fa-microphone-slash text-red-400 animate-pulse';
+            }
+        }
+
+        function stopMicUI() {
+            const micIcon = document.getElementById('micIcon');
+            const micBtn = document.getElementById('micBtn');
+            micBtn.classList.remove('listening');
+            micIcon.className = 'fa-solid fa-microphone text-slate-400';
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('hidden');
+        }
+
+        function handleKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleFormSubmit(e);
+            }
+        }
+
+        function sendQuickPrompt(promptText) {
+            document.getElementById('userInput').value = promptText;
+            handleFormSubmit(new Event('submit'));
+        }
+
+        function clearChat() {
+            conversationHistory = [];
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.innerHTML = `
+                <div id="welcomeCard" class="bg-gradient-to-br from-slate-800 via-slate-800/90 to-red-950/40 border border-slate-700/70 rounded-2xl p-5 sm:p-6 shadow-xl mb-6">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-red-900/80 border border-red-500/40 flex items-center justify-center shrink-0 shadow-lg text-amber-400 text-xl">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div class="space-y-2">
+                            <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+                                Chat Cleared! How can I assist you next? 🎓
+                            </h2>
+                            <p class="text-sm text-slate-300">
+                                Ask any question regarding Malla Reddy College courses, admission cutoffs, placements, hostels, or faculty.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            stopAudio();
+            document.getElementById('sourcesContainer').classList.add('hidden');
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            if (isGenerating) return;
+
+            const inputEl = document.getElementById('userInput');
+            const text = inputEl.value.trim();
+            if (!text) return;
+
+            // Clear input & reset rows
+            inputEl.value = '';
+            inputEl.style.height = 'auto';
+
+            // Hide welcome card if present
+            const welcomeCard = document.getElementById('welcomeCard');
+            if (welcomeCard) welcomeCard.style.display = 'none';
+
+            // Render User Message
+            appendMessage('user', text);
+
+            // Prepare history entry
+            conversationHistory.push({
+                role: 'user',
+                parts: [{ text: text }]
+            });
+
+            // Create placeholder AI message bubble
+            const aiMessageId = appendThinkingBubble();
+            isGenerating = true;
+            document.getElementById('sendBtn').disabled = true;
+
+            try {
+                // Exponential Backoff Fetch Helper
+                const responseData = await fetchWithBackoff(buildApiPayload());
+                
+                const candidate = responseData.candidates?.[0];
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    const aiText = candidate.content.parts[0].text;
+                    
+                    // Add AI turn to history
+                    conversationHistory.push(candidate.content);
+
+                    // Update UI with response text
+                    updateMessageBubble(aiMessageId, aiText);
+
+                    // Handle Grounding Metadata Citations if available
+                    handleGroundingSources(candidate.groundingMetadata);
+
+                    // Play Audio if TTS toggle enabled
+                    if (isTTSEnabled) {
+                        speakTextGemini(aiText);
+                    }
+                } else {
+                    updateMessageBubble(aiMessageId, "I'm sorry, I couldn't process your request regarding Malla Reddy College. Please try rephrasing your question!");
+                }
+            } catch (err) {
+                console.error("Gemini API Error:", err);
+                updateMessageBubble(aiMessageId, "⚠️ Connection issue while connecting to Gemini AI servers. Please check your network and try again.");
+            } finally {
+                isGenerating = false;
+                document.getElementById('sendBtn').disabled = false;
+            }
+        }
+
+        function buildApiPayload() {
+            const payload = {
+                contents: conversationHistory,
+                systemInstruction: {
+                    parts: [{ text: SYSTEM_INSTRUCTION }]
+                }
+            };
+
+            // Add Search Grounding tool if turned on
+            if (isGroundingEnabled) {
+                payload.tools = [{ "google_search": {} }];
+            }
+
+            return payload;
+        }
+
+        async function fetchWithBackoff(payload, maxRetries = 3) {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            let delay = 1000;
+
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const res = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (res.ok) {
+                        return await res.json();
+                    }
+                } catch (e) {
+                    // Retry silently
+                }
+                await new Promise(r => setTimeout(r, delay));
+                delay *= 2;
+            }
+            throw new Error("API call failed after retries.");
+        }
+
+        function appendMessage(role, text) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex gap-3 ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+
+            if (role === 'user') {
+                messageDiv.innerHTML = `
+                    <div class="max-w-[85%] sm:max-w-[75%] bg-gradient-to-r from-red-900 to-amber-700 text-white p-3.5 px-4 rounded-2xl chat-bubble-user shadow-md text-sm leading-relaxed">
+                        ${escapeHtml(text)}
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-amber-600 flex items-center justify-center shrink-0 text-white font-bold text-xs shadow">
+                        You
+                    </div>
+                `;
+            }
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function appendThinkingBubble() {
+            const chatContainer = document.getElementById('chatContainer');
+            const msgId = 'msg-' + Date.now();
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'flex gap-3 justify-start';
+            messageDiv.id = msgId;
+
+            messageDiv.innerHTML = `
+                <div class="w-8 h-8 rounded-full bg-red-900 border border-amber-500/40 flex items-center justify-center shrink-0 text-amber-400 font-bold text-xs shadow">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div class="max-w-[85%] sm:max-w-[75%] bg-slate-800 border border-slate-700/80 text-slate-100 p-4 rounded-2xl chat-bubble-ai shadow-md text-sm leading-relaxed space-y-2">
+                    <div class="flex items-center gap-2 text-amber-400 text-xs font-semibold">
+                        <i class="fa-solid fa-spinner animate-spin"></i>
+                        <span>MRDU AI is retrieving details...</span>
+                    </div>
+                </div>
+            `;
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return msgId;
+        }
+
+        function updateMessageBubble(elementId, rawMarkdown) {
+            const messageDiv = document.getElementById(elementId);
+            if (!messageDiv) return;
+
+            const parsedHtml = marked.parse(rawMarkdown);
+
+            messageDiv.innerHTML = `
+                <div class="w-8 h-8 rounded-full bg-red-900 border border-amber-500/40 flex items-center justify-center shrink-0 text-amber-400 font-bold text-xs shadow">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div class="max-w-[85%] sm:max-w-[75%] bg-slate-800 border border-slate-700/80 text-slate-100 p-4 rounded-2xl chat-bubble-ai shadow-md text-sm leading-relaxed space-y-2 prose prose-invert max-w-none">
+                    ${parsedHtml}
+                    <div class="pt-2 border-t border-slate-700/50 flex items-center justify-between text-[11px] text-slate-400">
+                        <span class="flex items-center gap-1">
+                            <i class="fa-solid fa-circle-check text-emerald-400 text-[10px]"></i> MRDU Concierge Verified
+                        </span>
+                        <button onclick="copyToClipboard(this)" data-text="${encodeURIComponent(rawMarkdown)}" class="hover:text-amber-400 transition-colors flex items-center gap-1">
+                            <i class="fa-solid fa-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function handleGroundingSources(metadata) {
+            const container = document.getElementById('sourcesContainer');
+            const list = document.getElementById('sourcesList');
+
+            if (metadata && metadata.groundingAttributions && metadata.groundingAttributions.length > 0) {
+                list.innerHTML = '';
+                const validSources = metadata.groundingAttributions
+                    .map(attr => ({ uri: attr.web?.uri, title: attr.web?.title }))
+                    .filter(s => s.uri && s.title);
+
+                if (validSources.length > 0) {
+                    validSources.slice(0, 4).forEach(s => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <a href="${s.uri}" target="_blank" rel="noopener noreferrer" class="text-emerald-300 hover:underline flex items-center gap-1.5 truncate">
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[10px] shrink-0"></i>
+                                <span class="truncate">${escapeHtml(s.title)}</span>
+                            </a>
+                        `;
+                        list.appendChild(li);
+                    });
+                    container.classList.remove('hidden');
+                    return;
+                }
+            }
+            container.classList.add('hidden');
+        }
+
+        async function speakTextGemini(text) {
+            stopAudio();
+            const statusBox = document.getElementById('audioPlayerStatus');
+            statusBox.classList.remove('hidden');
+
+            try {
+                // Strip markdown special chars for clean TTS input
+                const cleanText = text.replace(/[*_#`~\[\]]/g, '').slice(0, 400);
+
+                const payload = {
+                    contents: [{
+                        parts: [{ text: `Say clearly and politely in a helpful tone: ${cleanText}` }]
+                    }],
+                    generationConfig: {
+                        responseModalities: ["AUDIO"],
+                        speechConfig: {
+                            voiceConfig: {
+                                prebuiltVoiceConfig: { voiceName: "Kore" }
+                            }
+                        }
+                    },
+                    model: "gemini-2.5-flash-preview-tts"
+                };
+
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                const audioData = part?.inlineData?.data;
+                const mimeType = part?.inlineData?.mimeType;
+
+                if (audioData && mimeType) {
+                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
+                    
+                    const pcm16Data = base64ToInt16Array(audioData);
+                    const wavBlob = pcmToWavBlob(pcm16Data, sampleRate);
+                    const audioUrl = URL.createObjectURL(wavBlob);
+
+                    currentAudio = new Audio(audioUrl);
+                    currentAudio.onended = () => {
+                        statusBox.classList.add('hidden');
+                    };
+                    currentAudio.play();
+                } else {
+                    fallbackBrowserSpeech(cleanText);
+                }
+            } catch (err) {
+                console.warn("Gemini TTS fallback to SpeechSynthesis:", err);
+                fallbackBrowserSpeech(text.replace(/[*_#`~\[\]]/g, '').slice(0, 300));
+            }
+        }
+
+        function fallbackBrowserSpeech(cleanText) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.rate = 1.0;
+                utterance.onend = () => {
+                    document.getElementById('audioPlayerStatus').classList.add('hidden');
+                };
+                window.speechSynthesis.speak(utterance);
+            } else {
+                document.getElementById('audioPlayerStatus').classList.add('hidden');
+            }
+        }
+
+        function stopAudio() {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+            document.getElementById('audioPlayerStatus').classList.add('hidden');
+        }
+
+        // Helper: Convert Base64 PCM16 to Int16Array
+        function base64ToInt16Array(base64) {
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return new Int16Array(bytes.buffer);
+        }
+
+        // Helper: Convert Int16 PCM array into playable WAV Blob
+        function pcmToWavBlob(pcm16Array, sampleRate) {
+            const numChannels = 1;
+            const bytesPerSample = 2;
+            const blockAlign = numChannels * bytesPerSample;
+            const byteRate = sampleRate * blockAlign;
+            const dataSize = pcm16Array.length * bytesPerSample;
+            const buffer = new ArrayBuffer(44 + dataSize);
+            const view = new DataView(buffer);
+
+            /* RIFF identifier */
+            writeString(view, 0, 'RIFF');
+            /* RIFF chunk length */
+            view.setUint32(4, 36 + dataSize, true);
+            /* RIFF type */
+            writeString(view, 8, 'WAVE');
+            /* format chunk identifier */
+            writeString(view, 12, 'fmt ');
+            /* format chunk length */
+            view.setUint32(16, 16, true);
+            /* sample format (1 is PCM) */
+            view.setUint16(20, 1, true);
+            /* channel count */
+            view.setUint16(22, numChannels, true);
+            /* sample rate */
+            view.setUint32(24, sampleRate, true);
+            /* byte rate */
+            view.setUint32(28, byteRate, true);
+            /* block align */
+            view.setUint16(32, blockAlign, true);
+            /* bits per sample */
+            view.setUint16(34, 16, true);
+            /* data chunk identifier */
+            writeString(view, 36, 'data');
+            /* data chunk length */
+            view.setUint32(40, dataSize, true);
+
+            // Write PCM audio samples
+            let offset = 44;
+            for (let i = 0; i < pcm16Array.length; i++, offset += 2) {
+                view.setInt16(offset, pcm16Array[i], true);
+            }
+
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        function writeString(view, offset, string) {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#039;');
+        }
+
+        function copyToClipboard(btn) {
+            const rawText = decodeURIComponent(btn.getAttribute('data-text'));
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = rawText;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> Copied!`;
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
