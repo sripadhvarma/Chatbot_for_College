@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+npm-debug.log*
+*.pyc
+*.wav
+*.log
+.kokoro-venv-linux/
+.kokoro-venv/
+__pycache__/
+.DS_Store

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Malla Reddy College - AI Campus Assistant</title>
+    <title>Malla Reddy Deemed University - AI Campus Assistant</title>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -37,6 +37,9 @@
     
     <!-- Marked.js for Markdown parsing -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- "Hey MRDU" wake-word matching helpers (shared with Node unit tests) -->
+    <script src="wake_word.cjs"></script>
     
     <!-- Inter Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -116,34 +119,41 @@
         <div class="flex items-center space-x-3">
             <div class="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-md ring-2 ring-amber-500/30 overflow-hidden">
                 <img src="mallareddy.png"
-                    alt="Malla Reddy University Logo"
+                    alt="Malla Reddy Deemed University Logo"
                     class="w-full h-full object-contain p-1">
             </div>
             <div>
-                <div class="flex items-center gap-2">
-                    <h1 class="font-bold text-lg text-slate-100 tracking-wide">MRDU Campus AI Agent</h1>
-                    <!-- <span class="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Gemini 3 Powered
-                    </span> -->
-                </div>
+<div class="flex items-center gap-2">
+                        <h1 class="font-bold text-lg text-slate-100 tracking-wide">MRDU</h1>
+                    </div>
                 <p class="text-xs text-slate-400">Malla Reddy Deemed University <span class="text-amber-400 font-semibold">(MRDU)</span></p>
             </div>
         </div>
 
         <!-- Action Controls -->
         <div class="flex items-center space-x-2 sm:space-x-3">
+            <!-- Wake-Word Voice Assistant Toggle -->
+            <div class="flex items-center gap-2">
+                <button id="wakeWordBtn" onclick="toggleWakeWord()" title="Toggle hands-free 'Hey MRDU' wake-word Voice Assistant" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700/80 hover:bg-slate-700 text-slate-300 border border-slate-600 flex items-center gap-2 transition-all">
+                    <i class="fa-solid fa-hand-sparkles text-slate-400" id="wakeWordIcon"></i>
+                    <span class="hidden sm:inline">Voice:</span>
+                    <span id="wakeWordStatus" class="font-bold text-slate-400">OFF</span>
+                </button>
+                <span id="wakeWordState" class="hidden text-[10px] text-amber-300/90 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-md max-w-[180px] truncate" title=""></span>
+            </div>
+
             <!-- Web Search Grounding Toggle -->
             <button id="groundingToggleBtn" onclick="toggleGrounding()" title="Toggle Live Web Search Grounding" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700/80 hover:bg-slate-700 text-slate-300 border border-slate-600 flex items-center gap-2 transition-all">
-                <i class="fa-solid fa-globe text-emerald-400" id="groundingIcon"></i>
+                <i class="fa-solid fa-globe-slash text-slate-400" id="groundingIcon"></i>
                 <span class="hidden sm:inline">Live Web Search:</span>
-                <span id="groundingStatus" class="font-bold text-emerald-400">ON</span>
+                <span id="groundingStatus" class="font-bold text-slate-400">OFF</span>
             </button>
 
             <!-- Info Drawer Toggle for Mobile -->
             <button onclick="toggleSidebar()" class="md:hidden p-2 rounded-lg bg-slate-700 text-slate-300 hover:text-white">
                 <i class="fa-solid fa-circle-info text-base"></i>
                 <!-- <img src="mrdulogo.png"
-                    alt="Malla Reddy University Logo"
+                    alt="Malla Reddy Deemed University Logo"
                     class="w-full h-full object-contain p-1"> -->
             </button>
 
@@ -151,7 +161,7 @@
             <button onclick="clearChat()" title="Clear Conversation" class="p-2 rounded-lg bg-slate-700/60 hover:bg-red-900/50 hover:text-red-300 text-slate-400 transition-colors">
                 <i class="fa-solid fa-trash-can text-sm"></i>
                  <!-- <img src="mrdulogo.png"
-                    alt="Malla Reddy University Logo"
+                    alt="Malla Reddy Deemed University Logo"
                     class="w-full h-full object-contain p-1"> -->
             </button>
         </div>
@@ -168,20 +178,20 @@
                 <span class="text-slate-400 font-medium shrink-0 flex items-center gap-1">
                     <i class="fa-solid fa-bolt text-amber-400"></i> Quick Ask:
                 </span>
-                <button onclick="sendQuickPrompt('What undergraduate, postgraduate and B.Tech specializations are offered at Malla Reddy University (MRDU)?')" class="shrink-0 bg-slate-800 hover:bg-red-900/40 hover:border-red-700/60 border border-slate-700 text-slate-300 px-3 py-1 rounded-full transition-all">
-                    📚 MRDU Programs
+                <button onclick="sendQuickPrompt('What undergraduate, postgraduate and B.Tech specializations are offered at Malla Reddy Deemed University (MRDU)?')" class="shrink-0 bg-slate-800 hover:bg-red-900/40 hover:border-red-700/60 border border-slate-700 text-slate-300 px-3 py-1 rounded-full transition-all">
+                    MRDU Programs
                 </button>
                 <button onclick="sendQuickPrompt('What are the TG EAPCET / EAMCET ranks, MRUET entrance test details, and admission eligibility criteria for MRDU?')" class="shrink-0 bg-slate-800 hover:bg-red-900/40 hover:border-red-700/60 border border-slate-700 text-slate-300 px-3 py-1 rounded-full transition-all">
-                    🎯 Admission & Cutoffs
+                    Admission & Cutoffs
                 </button>
-                <button onclick="sendQuickPrompt('Tell me about recent placement statistics, top recruiters and highest packages at Malla Reddy University (MRDU).')" class="shrink-0 bg-slate-800 hover:bg-red-900/40 hover:border-red-700/60 border border-slate-700 text-slate-300 px-3 py-1 rounded-full transition-all">
-                    💼 Placement Highlights
+                <button onclick="sendQuickPrompt('Tell me about recent placement statistics, top recruiters and highest packages at Malla Reddy Deemed University (MRDU).')" class="shrink-0 bg-slate-800 hover:bg-red-900/40 hover:border-red-700/60 border border-slate-700 text-slate-300 px-3 py-1 rounded-full transition-all">
+                    Placement Highlights
                 </button>
-                <button onclick="sendQuickPrompt('What are the hostel, sports, laboratory and campus facilities available at Malla Reddy University (MRDU)?')" class="shrink-0 bg-slate-800 hover:bg-red-900/40 hover:border-red-700/60 border border-slate-700 text-slate-300 px-3 py-1 rounded-full transition-all">
-                    🏛️ Campus Facilities
+                <button onclick="sendQuickPrompt('What are the hostel, sports, laboratory and campus facilities available at Malla Reddy Deemed University (MRDU)?')" class="shrink-0 bg-slate-800 hover:bg-red-900/40 hover:border-red-700/60 border border-slate-700 text-slate-300 px-3 py-1 rounded-full transition-all">
+                    Campus Facilities
                 </button>
-                <button onclick="sendQuickPrompt('Provide contact details, official email, phone numbers and exact location of Malla Reddy University (MRDU).')" class="shrink-0 bg-slate-800 hover:bg-red-900/40 hover:border-red-700/60 border border-slate-700 text-slate-300 px-3 py-1 rounded-full transition-all">
-                    📍 Location & Contact
+                <button onclick="sendQuickPrompt('Provide contact details, official email, phone numbers and exact location of Malla Reddy Deemed University (MRDU).')" class="shrink-0 bg-slate-800 hover:bg-red-900/40 hover:border-red-700/60 border border-slate-700 text-slate-300 px-3 py-1 rounded-full transition-all">
+                    Location & Contact
                 </button>
             </div>
 
@@ -194,16 +204,13 @@
                         <div class="w-12 h-12 rounded-2xl bg-red-900/80 border border-red-500/40 flex items-center justify-center shrink-0 shadow-lg text-amber-400 text-xl">
                             <!-- <i class="fa-solid fa-robot"></i> -->
                             <img src="mrdulogo.png"
-                                alt="Malla Reddy University Logo"
+                                alt="Malla Reddy Deemed University Logo"
                                 class="w-full h-full object-contain p-1">
                         </div>
                         <div class="space-y-2">
                             <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
-                                Namaste! Welcome to Malla Reddy Deemed University (MRDU) AI Concierge 🎓
+                                Hello. How can I help you?
                             </h2>
-                            <p class="text-sm text-slate-300 leading-relaxed">
-                                I am your dedicated AI assistant for <strong class="text-amber-400">Malla Reddy Deemed University (MRDU)</strong>. Ask me anything about engineering, agricultural sciences, allied health, management, MRUET entrance test, fee structure, placement drives, hostel life, or campus events.
-                            </p>
                             
                             <div class="pt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                                 <div class="p-2.5 rounded-lg bg-slate-900/50 border border-slate-700/50 flex items-center gap-2">
@@ -249,10 +256,10 @@
                         </button>
                     </div>
 
-                    <!-- Voice TTS Audio toggle checkbox button
+                    <!-- Voice TTS Audio toggle checkbox button -->
                     <button type="button" id="ttsToggleBtn" onclick="toggleTTS()" title="Auto-speak response" class="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 transition-colors">
                         <i class="fa-solid fa-volume-xmark text-base" id="ttsIcon"></i>
-                    </button> -->
+                    </button>
 
                     <!-- Send Button -->
                     <button type="submit" id="sendBtn" class="p-3 bg-gradient-to-r from-red-800 to-amber-600 hover:from-red-700 hover:to-amber-500 text-white rounded-2xl shadow-lg shadow-red-950/50 font-medium flex items-center justify-center transition-all disabled:opacity-50">
@@ -315,7 +322,7 @@
                 <div class="grid grid-cols-2 gap-2 text-xs">
                     <div class="bg-emerald-950/40 border border-emerald-800/40 p-2.5 rounded-xl">
                         <span class="text-slate-400 text-[10px] block">Highest Package</span>
-                        <span class="text-emerald-400 font-bold text-base">₹38 LPA+</span>
+                        <span class="text-emerald-400 font-bold text-base">₹20 LPA+</span>
                     </div>
                     <div class="bg-amber-950/40 border border-amber-800/40 p-2.5 rounded-xl">
                         <span class="text-slate-400 text-[10px] block">Offers Placed</span>
@@ -333,16 +340,19 @@
                     <i class="fa-solid fa-headset text-slate-400"></i> Admission Helpline
                 </h4>
                 <div class="space-y-1.5 text-slate-300">
-                    <p class="flex items-center gap-2">
-                        <i class="fa-solid fa-phone text-emerald-400 w-4"></i> +91 7207034237 / 9348161222
-                    </p>
-                    <p class="flex items-center ga.p-2">
-                        <i class="fa-solid fa-envelope text-amber-400 w-4"></i>  mrdu@university.ac.in
-                    </p>
-                    <p class="flex items-start gap-2 pt-1">
-                        <i class="fa-solid fa-location-dot text-red-400 w-4 mt-0.5 shrink-0"></i> 
+                    <a href="tel:+919348161303" aria-label="Call +91 9348161303" title="Call +91 9348161303" class="flex items-center gap-2 rounded-md hover:text-emerald-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50">
+                        <i class="fa-solid fa-phone text-emerald-400 w-4 shrink-0"></i> +91 9348161303
+                    </a>
+                    <a href="tel:+918712020867" aria-label="Contact admissions at +91 8712020867" title="Contact Admissions: +91 8712020867" class="flex items-center gap-2 rounded-md hover:text-amber-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50">
+                        <i class="fa-solid fa-phone-volume text-amber-400 w-4 shrink-0"></i> +91 8712020867
+                    </a>
+                    <a href="mailto:info@mrdu.edu.in" aria-label="Email info@mrdu.edu.in" title="Email info@mrdu.edu.in" class="flex items-center gap-2 rounded-md hover:text-amber-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50">
+                        <i class="fa-solid fa-envelope text-amber-400 w-4 shrink-0"></i> info@mrdu.edu.in
+                    </a>
+                    <a href="https://www.google.com/maps/search/?api=1&amp;query=Malla+Reddy+Deemed+University+Hyderabad" target="_blank" rel="noopener noreferrer" aria-label="Open Malla Reddy Deemed University location on Google Maps" title="Open location on Google Maps" class="flex items-start gap-2 pt-1 rounded-md hover:text-red-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50">
+                        <i class="fa-solid fa-location-dot text-red-400 w-4 mt-0.5 shrink-0"></i>
                         <span>Maisammaguda, Dhulapally, Kompally, Secunderabad, Telangana 500100</span>
-                    </p>
+                    </a>
                 </div>
             </div>
 
@@ -360,7 +370,6 @@
 
     <script>
         // Global State
-        const apiKey = "AQ.Ab8RN6Lx1r9AkCkpzTNdDy285dlLOtHyKB08X3KPWHZMsL05zg"; // Gemini API Key populated by environment in runtime
         let isGroundingEnabled = false;
         let isTTSEnabled = false;
         let conversationHistory = [];
@@ -368,36 +377,167 @@
         let currentAudio = null;
         let speechRecognition = null;
 
-        // System Instruction defining MRDU agent's persona & comprehensive knowledge
+        // Wake-Word Voice Assistant ("Hey MRDU" via browser SpeechRecognition)
+        const WAKE_WORD = 'hey mrdu';
+        const KOKORO_VOICE = 'bf_emma';
+        const KOKORO_SPEED = 1.0;
+        const GREETING_TEXT = 'Hello there, how can I help you?';
+        // After stop(), wait for recognition onend, then debounce before acting.
+        const WAKE_HANDOFF_DEBOUNCE_MS = 500;
+        // After Kokoro audio ends, wait before restarting wake-word listening.
+        const VOICE_RESTART_MS = 400;
+        let wakeWordActive = false;
+        let wakeWordRequested = false;
+
+        // Voice Assistant state: idle | waiting-for-wake-word | greeting | listening-for-question | thinking | speaking | error
+        let voiceState = 'idle';
+        // Set true on the FIRST reliable (final) wake detection of an utterance; reset
+        // only when the assistant returns to wake-word listening. Prevents duplicate activation.
+        let wakeWordTriggered = false;
+        // Question captured together with the wake word (same-sentence), pending handoff.
+        let wakePendingQuestion = null;
+        let wakeRecognition = null;
+        let questionRecognition = null;
+        let wakeRecRunning = false;
+        let questionRecRunning = false;
+
+        // Track every voice-related timer so turning OFF cancels pending restarts.
+        let pendingVoiceTimers = new Set();
+        function scheduleVoice(fn, ms) {
+            const id = setTimeout(() => {
+                pendingVoiceTimers.delete(id);
+                fn();
+            }, ms);
+            pendingVoiceTimers.add(id);
+            return id;
+        }
+        function clearVoiceTimers() {
+            pendingVoiceTimers.forEach(id => clearTimeout(id));
+            pendingVoiceTimers.clear();
+        }
+
+        // System Instruction defining MRDU agent's persona & knowledge retrieval behavior
         const SYSTEM_INSTRUCTION = `
-You are the official AI Campus Concierge and Admissions Assistant for Malla Reddy University (MRDU), located in Maisammaguda, Dhulapally, Secunderabad / Hyderabad, Telangana, India.
+You are the AI assistant for Malla Reddy Deemed University (MRDU).
 
-Your Goal: Provide warm, accurate, respectful, and highly informative responses to students, parents, faculty, and alumni.
+Answer the user's actual question directly and concisely.
 
-Key Institutional Details to always rely on:
-1. Institution Name: Malla Reddy University (MRDU).
-2. Founder / Chairman: Ch. Malla Reddy (Prominent educationist, founder of Malla Reddy Group of Institutions).
-3. Status: Recognized Private University established under Telangana State Private Universities Act & UGC recognized.
-4. Admission Criteria: Admission through TG EAPCET / TS EAMCET, JEE Main, MRUET (Malla Reddy University Entrance Test), or merit marks.
-5. Schools & Offered Programs at MRDU:
-   - School of Engineering: B.Tech in CSE, AI & ML, Data Science, Cyber Security, Cloud Computing, IoT, ECE, Mechanical, Civil, IT.
-   - School of Agricultural Sciences: B.Sc. (Hons) Agriculture.
-   - School of Allied Health Sciences: B.Sc. Anesthesia Tech, Medical Lab Tech, Radiology, Physiotherapy (BPT), Nursing, Cardiac Technology.
-   - School of Management & Commerce: BBA (Business Analytics, Digital Marketing), MBA (HR, Finance, Marketing, Supply Chain).
-   - School of Sciences: B.Sc. / M.Sc. Data Science, Biotechnology, Cyber Security.
-6. Postgraduate Programs: M.Tech, MBA, M.Sc.
-7. Location & Address: Maisammaguda, Dhulapally, Kompally, Secunderabad/Hyderabad, Telangana 500100.
-8. Placements & Career Cell: 100+ top visiting recruiters including Amazon, TCS, Cognizant, Wipro, Accenture, Capgemini, Virtusa, Infosys, Tech Mahindra. Highest packages around 30 to 38+ LPA, average packages around 4.5 to 6 LPA.
-9. Campus Facilities: Modern laboratories, AI & Robotics Centers, digital central library, high-speed Wi-Fi, separate hostel facilities for boys & girls, sports facilities (cricket ground, basketball, badminton), cafeteria, transport buses covering Hyderabad & Secunderabad.
-10. Tone: Polite, professional, encouraging, enthusiastic, structured with bullet points or formatted sections when helpful. Use a polite Indian greeting like "Namaste!" or "Hello!" where appropriate.
+Do not invent facts.
 
-If asked about real-time updates or specific latest events, fee structures, or notifications, provide the clear answer and reference official site mallareddyuniversity.ac.in when relevant.
+When the requested information is current, specific, or likely to have
+changed, use the available web-search tool when appropriate.
+
+Prefer official MRDU sources for MRDU-specific facts. Primary domain:
+https://mrdu.edu.in/ and its official subpages. Do not mix information
+from similarly named institutions unless the user explicitly asks.
+
+When reliable current information is available from an official source,
+answer using that information instead of saying that you do not have it.
+
+Do not tell the user to search the website themselves when the assistant
+can retrieve the information.
+
+Do not expose the retrieval process unless source attribution is useful.
+
+Never discuss speech-recognition errors or pronunciation corrections.
+
+Silently normalize obvious ASR variants of MRDU when the intended
+meaning is clear.
+
+"Malla Reddy University", "Malla Reddy College", "Malla Reddy Deemed
+University", and "Malla Reddy Deemed University Hyderabad" all refer to
+the SAME campus entity: Malla Reddy Deemed University (MRDU). Only treat
+a reference as a different institution when the surrounding context
+unmistakably describes a different, unrelated entity.
+
+Never tell the user that their pronunciation, spelling, or transcription
+was wrong, and never point out that the question came over voice. Never
+correct the user's phrasing in your reply.
+
+Do not say:
+'It seems like you might be referring to...'
+'You might be referring to...'
+'Did you mean...'
+'There is no known...'
+unless genuine ambiguity remains after normalization.
+
+When a question clearly relates to this college chatbot with slight word
+misuse, simply answer as intended. If the intent is genuinely ambiguous,
+ask one short clarifying question.
+
+For placement, fee, or admission figures: clearly distinguish highest
+package, average package, number of offers, recruiter list, placement
+rate, and the academic year or period provided. Do not combine figures
+from different years without explicitly saying so. If a specific figure
+is not published by the official source, say exactly which figure could
+not be verified and still provide the figures that ARE verified.
+
+Do not use emojis.
+
+Do not add generic greetings to factual answers.
+
+Do not add unrelated university information.
+
+Answer only what was requested.
+
+When multiple figures from different periods are available, state the
+relevant period rather than mixing them.
+
+When a requested fact cannot be verified, say exactly which fact could
+not be verified instead of refusing the entire question.
+
+Never fabricate a statistic, course, fee, recruiter, package, date, or
+policy.
+
+Static institutional facts (may change; verify via official source when
+the user asks for current data):
+- Institution: Malla Reddy Deemed University (MRDU)
+- Founder / Chairman: Ch. Malla Reddy (Malla Reddy Group of Institutions)
+- Status: UGC-recognized private university, Telangana State Private
+  Universities Act
+- Address: Maisammaguda, Dhulapally, Kompally, Secunderabad / Hyderabad,
+  Telangana
+
+Canonical institution:
+Malla Reddy Deemed University
+
+Short name:
+MRDU
 `;
 
-        // Initialize Speech Recognition if supported
-        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+        // Speech Recognition support helpers.
+        function isSpeechRecognitionSupported() {
+            return 'SpeechRecognition' in window || 'webkitSpeechRecognition' in window;
+        }
+
+        function createSpeechRecognition() {
             const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-            speechRecognition = new SpeechRec();
+            return new SpeechRec();
+        }
+
+        // Best-effort mic permission preflight. Requests the microphone with echo
+        // cancellation / noise suppression / auto-gain where the browser allows it,
+        // then IMMEDIATELY stops the tracks so no persistent stream is held while
+        // SpeechRecognition is active. This only surfaces the permission prompt;
+        // we do not claim these constraints apply directly to SpeechRecognition.
+        function requestMicPermission() {
+            try {
+                if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') return;
+                navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                }).then((stream) => {
+                    stream.getTracks().forEach(t => t.stop());
+                }).catch(() => {});
+            } catch (e) {}
+        }
+
+        // Manual microphone input (existing behavior): populate input, let user review.
+        if (isSpeechRecognitionSupported()) {
+            speechRecognition = createSpeechRecognition();
             speechRecognition.continuous = false;
             speechRecognition.interimResults = false;
             speechRecognition.lang = 'en-IN';
@@ -417,19 +557,40 @@ If asked about real-time updates or specific latest events, fee structures, or n
             };
         }
 
-        function toggleGrounding() {
-            isGroundingEnabled = !isGroundingEnabled;
+        function renderGroundingStatus() {
             const statusEl = document.getElementById('groundingStatus');
             const iconEl = document.getElementById('groundingIcon');
             if (isGroundingEnabled) {
                 statusEl.innerText = 'ON';
                 statusEl.className = 'font-bold text-emerald-400';
+                statusEl.title = '';
                 iconEl.className = 'fa-solid fa-globe text-emerald-400';
             } else {
                 statusEl.innerText = 'OFF';
                 statusEl.className = 'font-bold text-slate-400';
+                statusEl.title = '';
                 iconEl.className = 'fa-solid fa-globe-slash text-slate-400';
             }
+        }
+
+        function toggleGrounding() {
+            isGroundingEnabled = !isGroundingEnabled;
+            renderGroundingStatus();
+        }
+
+        // Show a transient "AUTO" indicator when the backend auto-enabled web
+        // search for a current/factual question while the user's toggle is OFF.
+        // NEVER overwrites the user's manual copy: it only appears when the
+        // toggle is already OFF, and renderGroundingStatus() restores the
+        // user's true state afterwards (see handleFormSubmit finally).
+        function showAutoWebSearchStatus() {
+            const statusEl = document.getElementById('groundingStatus');
+            const iconEl = document.getElementById('groundingIcon');
+            if (isGroundingEnabled) return;
+            statusEl.innerText = 'AUTO';
+            statusEl.className = 'font-bold text-emerald-400';
+            statusEl.title = 'Live web search was auto-enabled for this current/factual MRDU question (toggle is OFF).';
+            iconEl.className = 'fa-solid fa-globe text-emerald-400';
         }
 
         function toggleTTS() {
@@ -471,6 +632,360 @@ If asked about real-time updates or specific latest events, fee structures, or n
             micIcon.className = 'fa-solid fa-microphone text-slate-400';
         }
 
+        // ---- Wake-Word Voice Assistant ("Hey MRDU" via browser SpeechRecognition) ----
+
+        const VOICE_STATE_TEXTS = {
+            'waiting-for-wake-word': 'Listening for "Hey MRDU"...',
+            'greeting': 'Greeting...',
+            'listening-for-question': 'Listening...',
+            'thinking': 'Thinking...',
+            'speaking': 'Speaking...'
+        };
+
+        function setWakeWordState(msg, isErr = false, force = false) {
+            const el = document.getElementById('wakeWordState');
+            const st = document.getElementById('wakeWordStatus');
+            if (!wakeWordActive && !force) {
+                el.classList.add('hidden');
+                el.innerText = '';
+                st.innerText = 'OFF';
+                st.className = 'font-bold text-slate-400';
+                document.getElementById('wakeWordIcon').className = 'fa-solid fa-hand-sparkles text-slate-400';
+                return;
+            }
+            el.classList.remove('hidden');
+            el.innerText = msg || '';
+            el.title = msg || '';
+            el.className = 'text-[10px] px-2 py-1 rounded-md max-w-[180px] truncate border ' + (isErr
+                ? 'bg-red-500/10 border-red-500/30 text-red-300'
+                : 'bg-amber-500/10 border-amber-500/20 text-amber-300/90');
+        }
+
+        function setVoiceState(state, msg) {
+            voiceState = state;
+            const text = (typeof msg === 'string' && msg) ? msg : (VOICE_STATE_TEXTS[state] || state);
+            setWakeWordState(text, state === 'error');
+        }
+
+        function toggleWakeWord() {
+            if (wakeWordActive) {
+                stopWakeWord();
+                return;
+            }
+            if (wakeWordRequested) return;
+            wakeWordRequested = true;
+            try {
+                if (!isSpeechRecognitionSupported()) {
+                    setWakeWordState('Voice Assistant unavailable in this browser.', true, true);
+                    return;
+                }
+                setWakeWordActive(true);
+                // Best-effort permission preflight: request the mic and immediately
+                // release the stream. Kept only to surface a permission prompt; its
+                // constraints are NOT claimed to apply to SpeechRecognition itself.
+                requestMicPermission();
+                startWakeRecognition();
+            } finally {
+                wakeWordRequested = false;
+            }
+        }
+
+        function setWakeWordActive(on) {
+            wakeWordActive = on;
+            const btn = document.getElementById('wakeWordBtn');
+            const st = document.getElementById('wakeWordStatus');
+            const icon = document.getElementById('wakeWordIcon');
+            const state = document.getElementById('wakeWordState');
+            if (on) {
+                btn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/50 flex items-center gap-2 transition-all';
+                st.innerText = 'ON';
+                st.className = 'font-bold text-amber-400';
+                icon.className = 'fa-solid fa-hand-sparkles animate-pulse text-amber-400';
+            } else {
+                btn.className = 'px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700/80 hover:bg-slate-700 text-slate-300 border border-slate-600 flex items-center gap-2 transition-all';
+                st.innerText = 'OFF';
+                st.className = 'font-bold text-slate-400';
+                icon.className = 'fa-solid fa-hand-sparkles text-slate-400';
+                state.classList.add('hidden');
+                state.innerText = '';
+            }
+        }
+
+        // Wake-word recognition: continuous, interim results, several alternatives.
+        function createWakeRecognition() {
+            const rec = createSpeechRecognition();
+            rec.continuous = true;
+            rec.interimResults = true;
+            rec.lang = 'en-IN';
+            rec.maxAlternatives = 5;
+            rec.onresult = onWakeResult;
+            rec.onerror = onWakeError;
+            rec.onend = onWakeEnd;
+            return rec;
+        }
+
+        function stopWakeRecognition() {
+            const rec = wakeRecognition;
+            wakeRecognition = null;
+            wakeRecRunning = false;
+            if (rec) {
+                try { rec.onresult = null; rec.onerror = null; rec.onend = null; } catch (e) {}
+                try { rec.stop(); } catch (e) {}
+            }
+        }
+
+        function startWakeRecognition() {
+            if (!wakeWordActive) return;
+            if (!isSpeechRecognitionSupported()) return;
+            wakeWordTriggered = false;
+            wakePendingQuestion = null;
+            stopQuestionRecognition();
+            stopWakeRecognition();
+            setVoiceState('waiting-for-wake-word');
+            wakeRecognition = createWakeRecognition();
+            try {
+                wakeRecognition.start();
+                wakeRecRunning = true;
+            } catch (e) {
+                wakeRecRunning = false;
+                if (wakeWordActive) {
+                    setWakeWordState('Could not start listening. Try again.', true);
+                    scheduleVoice(() => { if (wakeWordActive) startWakeRecognition(); }, 700);
+                }
+            }
+        }
+
+        function onWakeResult(event) {
+            if (!wakeWordActive || wakeWordTriggered) return;
+            // Evaluate every result and every alternative.
+            for (let i = 0; i < event.results.length; i++) {
+                const result = event.results[i];
+                const resultInfo = {
+                    isFinal: result.isFinal,
+                    transcripts: Array.from(result, (alt) => alt.transcript)
+                };
+                const verdict = MRDUWake.evaluateWakeMatchResult(resultInfo);
+                if (verdict.matched) {
+                    if (verdict.final) {
+                        // Only a FINAL result may be acted on. Interim wake matches are
+                        // never submitted - we keep listening until the result finalizes.
+                        handleWakeHeard(verdict.question, result);
+                        return;
+                    }
+                    // Interim wake detection: show state change but never submit yet.
+                    if (voiceState !== 'greeting') {
+                        setVoiceState('waiting-for-wake-word');
+                    }
+                }
+            }
+        }
+
+        function onWakeError(event) {
+            wakeRecRunning = false;
+            if (!wakeWordActive) return;
+            const err = event && event.error;
+            if (err === 'not-allowed' || err === 'service-not-allowed') {
+                setWakeWordActive(false);
+                setWakeWordState('Microphone permission denied.', true, true);
+                return;
+            }
+            // Transient errors ('aborted', 'no-speech', 'network', ...) are handled by onWakeEnd.
+        }
+
+        function onWakeEnd() {
+            wakeRecRunning = false;
+            if (!wakeWordActive) return;
+            if (wakeWordTriggered) return;
+            if (voiceState === 'waiting-for-wake-word' || voiceState === 'idle') {
+                scheduleVoice(() => {
+                    if (wakeWordActive && !wakeWordTriggered) startWakeRecognition();
+                }, 150);
+            }
+        }
+
+        function handleWakeHeard(question, triggeredResult) {
+            if (!wakeWordActive || wakeWordTriggered) return;
+            wakeWordTriggered = true;
+            wakePendingQuestion = (typeof question === 'string' && question.trim()) ? question.trim() : '';
+            // (1) Stop the wake recognizer, but STRICTLY hand off: wait for its onend
+            //     event before proceeding. Never start the next phase from the interim.
+            stopWakeRecognitionForHandoff(triggeredResult);
+        }
+
+        // Stops the wake recognizer WITHOUT detaching its onend handler, so we can
+        // reliably wait for recognition to fully stop before the handoff debounce.
+        function stopWakeRecognitionForHandoff(triggeredResult) {
+            const rec = wakeRecognition;
+            wakeRecognition = null;
+            if (!rec) {
+                proceedAfterWakeHandoff();
+                return;
+            }
+            let settled = false;
+            const settle = () => {
+                if (settled) return;
+                settled = true;
+                wakeRecRunning = false;
+                proceedAfterWakeHandoff();
+            };
+            try {
+                rec.onend = () => { try { rec.onend = null; } catch (e) {} settle(); };
+                rec.stop();
+            } catch (e) {
+                settle();
+            }
+            // Safety valve: onend may not fire on some browsers; settle anyway.
+            scheduleVoice(settle, 1500);
+        }
+
+        function proceedAfterWakeHandoff() {
+            if (!wakeWordActive) return;
+            if (isGenerating) {
+                endVoiceTurn('Busy answering — listening again.');
+                return;
+            }
+            // (2) Debounce 400-800ms between the wake stop and the next action.
+            scheduleVoice(() => {
+                if (!wakeWordActive) return;
+                const q = wakePendingQuestion;
+                wakePendingQuestion = null;
+                if (q && MRDUWake.isMeaningfulTranscript(q)) {
+                    // Same-sentence question: strip complete wake phrase, then submit.
+                    const normalized = MRDUWake.normalizeVoiceQuestion(q);
+                    const clean = normalized || q;
+                    if (MRDUWake.isMeaningfulTranscript(clean)) {
+                        submitVoiceQuestion(clean);
+                        return;
+                    }
+                }
+                // Wake word alone: greet, then start a fresh question session.
+                speakGreetingAndListen();
+            }, WAKE_HANDOFF_DEBOUNCE_MS);
+        }
+
+        function speakGreetingAndListen() {
+            if (!wakeWordActive) return;
+            setVoiceState('greeting');
+            speakGreeting(() => {
+                if (wakeWordActive) startQuestionRecognition();
+            });
+        }
+
+        // Question recognition: one-shot final results only.
+        function createQuestionRecognition() {
+            const rec = createSpeechRecognition();
+            rec.continuous = false;
+            rec.interimResults = false;
+            rec.lang = 'en-IN';
+            rec.maxAlternatives = 3;
+            rec.onresult = onQuestionResult;
+            rec.onerror = onQuestionError;
+            rec.onend = onQuestionEnd;
+            return rec;
+        }
+
+        function stopQuestionRecognition() {
+            const rec = questionRecognition;
+            questionRecognition = null;
+            questionRecRunning = false;
+            if (rec) {
+                try { rec.onresult = null; rec.onerror = null; rec.onend = null; } catch (e) {}
+                try { rec.stop(); } catch (e) {}
+            }
+        }
+
+        function startQuestionRecognition() {
+            if (!wakeWordActive) return;
+            stopWakeRecognition();
+            setVoiceState('listening-for-question');
+            questionRecognition = createQuestionRecognition();
+            try {
+                questionRecognition.start();
+                questionRecRunning = true;
+            } catch (e) {
+                questionRecRunning = false;
+                if (wakeWordActive) {
+                    scheduleVoice(() => { if (wakeWordActive) startWakeRecognition(); }, 400);
+                }
+            }
+        }
+
+        // Submits a voice question to /api/chat. The wake phrase has already been
+        // stripped and the text normalized for voice only (typed input is untouched).
+        function submitVoiceQuestion(questionText) {
+            if (!wakeWordActive) return;
+            setVoiceState('thinking');
+            const inputEl = document.getElementById('userInput');
+            inputEl.value = questionText;
+            handleFormSubmit(new Event('submit'));
+        }
+
+        function onQuestionResult(event) {
+            if (!wakeWordActive) return;
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const result = event.results[i];
+                if (!result.isFinal) continue;
+                for (let j = 0; j < result.length; j++) {
+                    const transcript = result[j].transcript;
+                    if (!transcript || !transcript.trim()) continue;
+                    const clean = MRDUWake.normalizeVoiceQuestion(transcript.trim());
+                    if (!clean || !MRDUWake.isMeaningfulTranscript(clean)) {
+                        // Background noise / gibberish — do not submit; listen again.
+                        stopQuestionRecognition();
+                        if (!wakeWordActive) return;
+                        endVoiceTurn('Did not hear a clear question — listening again.');
+                        return;
+                    }
+                    stopQuestionRecognition();
+                    if (!wakeWordActive) return;
+                    submitVoiceQuestion(clean);
+                    return;
+                }
+            }
+        }
+
+        function onQuestionError(event) {
+            questionRecRunning = false;
+            if (!wakeWordActive) return;
+            const err = event && event.error;
+            if (err === 'not-allowed' || err === 'service-not-allowed') {
+                setWakeWordActive(false);
+                setWakeWordState('Microphone permission denied.', true, true);
+                return;
+            }
+            if (voiceState === 'listening-for-question') {
+                scheduleVoice(() => { if (wakeWordActive) startWakeRecognition(); }, 600);
+            }
+        }
+
+        function onQuestionEnd() {
+            questionRecRunning = false;
+            if (!wakeWordActive) return;
+            if (voiceState === 'thinking' || voiceState === 'speaking' || voiceState === 'error') return;
+            if (voiceState === 'listening-for-question') {
+                setWakeWordState('Did not hear a question — listening again.', true);
+                scheduleVoice(() => { if (wakeWordActive) startWakeRecognition(); }, 1200);
+            }
+        }
+
+        function endVoiceTurn(reason) {
+            if (!MRDUWake.shouldContinueVoiceSession({ wakeWordActive })) return;
+            if (reason) setWakeWordState(reason, true);
+            scheduleVoice(() => { if (wakeWordActive) startWakeRecognition(); }, VOICE_RESTART_MS);
+        }
+
+        function stopWakeWord() {
+            wakeWordActive = false;
+            wakeWordTriggered = false;
+            wakePendingQuestion = null;
+            clearVoiceTimers();
+            stopWakeRecognition();
+            stopQuestionRecognition();
+            stopAudio();
+            setWakeWordActive(false);
+            setVoiceState('idle');
+        }
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('hidden');
@@ -499,17 +1014,28 @@ If asked about real-time updates or specific latest events, fee structures, or n
                         </div>
                         <div class="space-y-2">
                             <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
-                                Chat Cleared! How can I assist you next? 🎓
+                                Chat cleared. How can I help you?
                             </h2>
-                            <p class="text-sm text-slate-300">
-                                Ask any question regarding Malla Reddy College courses, admission cutoffs, placements, hostels, or faculty.
-                            </p>
                         </div>
                     </div>
                 </div>
             `;
             stopAudio();
             document.getElementById('sourcesContainer').classList.add('hidden');
+        }
+
+        // Map /api/chat failures to clear user-facing messages by HTTP status.
+        // Does NOT alter the OpenRouter architecture or leak any credentials.
+        function apiErrorMessage(err) {
+            if (err && err.timedOut) return 'The request took too long. Please try again.';
+            if (err && err.parsingError) return 'The server returned an unreadable response. Please try again.';
+            if (err && err.name === 'AbortError') return 'The request was cancelled. Please try again.';
+            const status = err && err.status;
+            if (status === 401) return 'AI service authentication failed.';
+            if (status === 429) return 'AI service rate limit reached. Please try again shortly.';
+            if (status === 400) return 'Your request could not be processed.';
+            if (status && status >= 500) return 'The AI service is temporarily unavailable.';
+            return 'The AI service could not be reached.';
         }
 
         async function handleFormSubmit(e) {
@@ -541,6 +1067,7 @@ If asked about real-time updates or specific latest events, fee structures, or n
             const aiMessageId = appendThinkingBubble();
             isGenerating = true;
             document.getElementById('sendBtn').disabled = true;
+            if (wakeWordActive) setVoiceState('thinking');
 
             try {
                 // Exponential Backoff Fetch Helper
@@ -553,6 +1080,10 @@ If asked about real-time updates or specific latest events, fee structures, or n
                     // Add AI turn to history
                     conversationHistory.push(candidate.content);
 
+                    // If the backend auto-enabled web search while the toggle
+                    // was OFF, surface that clearly (restored in finally).
+                    if (responseData.webSearchEnabled) showAutoWebSearchStatus();
+
                     // Update UI with response text
                     updateMessageBubble(aiMessageId, aiText);
 
@@ -560,18 +1091,24 @@ If asked about real-time updates or specific latest events, fee structures, or n
                     handleGroundingSources(candidate.groundingMetadata);
 
                     // Play Audio if TTS toggle enabled
-                    if (isTTSEnabled) {
-                        speakTextGemini(aiText);
+                    if (isTTSEnabled || wakeWordActive) {
+                        speakResponseText(aiText);
+                        return;
                     }
                 } else {
-                    updateMessageBubble(aiMessageId, "I'm sorry, I couldn't process your request regarding Malla Reddy College. Please try rephrasing your question!");
+                    updateMessageBubble(aiMessageId, "I'm sorry, I couldn't process your request regarding Malla Reddy Deemed University. Please try rephrasing your question!");
+                    if (wakeWordActive) endVoiceTurn('I could not process that question — listening again.');
                 }
             } catch (err) {
-                console.error("Gemini API Error:", err);
-                updateMessageBubble(aiMessageId, "⚠️ Connection issue while connecting to Gemini AI servers. Please check your network and try again.");
+                console.error("OpenRouter API Error:", err);
+                const userMessage = apiErrorMessage(err);
+                updateMessageBubble(aiMessageId, userMessage);
+                if (wakeWordActive) endVoiceTurn(userMessage + ' — listening again.');
             } finally {
                 isGenerating = false;
                 document.getElementById('sendBtn').disabled = false;
+                // Restore the user's actual toggle state (manual choice always wins).
+                renderGroundingStatus();
             }
         }
 
@@ -585,34 +1122,71 @@ If asked about real-time updates or specific latest events, fee structures, or n
 
             // Add Search Grounding tool if turned on
             if (isGroundingEnabled) {
-                payload.tools = [{ "google_search": {} }];
+                payload.tools = [{ type: 'openrouter:web_search' }];
             }
 
             return payload;
         }
 
+        // Fetch with a hard AbortController timeout so a hanging request can
+        // never leave the chat or voice assistant stuck.
+        async function fetchWithTimeout(url, options, timeoutMs) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                return await fetch(url, { ...options, signal: controller.signal });
+            } catch (err) {
+                if (err && err.name === 'AbortError') {
+                    const timeoutError = new Error(`Request timed out after ${Math.round(timeoutMs / 1000)}s.`);
+                    timeoutError.timedOut = true;
+                    throw timeoutError;
+                }
+                throw err;
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
         async function fetchWithBackoff(payload, maxRetries = 3) {
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            const apiUrl = '/api/chat';
+            const apiTimeoutMs = 60000;
             let delay = 1000;
+            let lastError = null;
 
             for (let i = 0; i < maxRetries; i++) {
                 try {
-                    const res = await fetch(apiUrl, {
+                    const res = await fetchWithTimeout(apiUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
-                    });
+                    }, apiTimeoutMs);
 
                     if (res.ok) {
-                        return await res.json();
+                        try {
+                            return await res.json();
+                        } catch (parseErr) {
+                            lastError = new Error('The server returned an invalid response.');
+                            lastError.parsingError = true;
+                            break;
+                        }
                     }
+
+                    const errData = await res.json().catch(() => ({}));
+                    lastError = new Error(errData.error || `Server error (${res.status})`);
+                    lastError.status = res.status;
+                    break;
                 } catch (e) {
-                    // Retry silently
+                    // Timeouts and aborts never retry: fail fast so the UI can reset.
+                    if (e && (e.timedOut || e.name === 'AbortError')) {
+                        lastError = e;
+                        break;
+                    }
+                    lastError = e; // transient network error: retry with backoff
                 }
                 await new Promise(r => setTimeout(r, delay));
                 delay *= 2;
             }
-            throw new Error("API call failed after retries.");
+            throw lastError || new Error("API call failed after retries.");
         }
 
         function appendMessage(role, text) {
@@ -714,149 +1288,102 @@ If asked about real-time updates or specific latest events, fee structures, or n
             container.classList.add('hidden');
         }
 
-        async function speakTextGemini(text) {
-            stopAudio();
+        // Speak via local Kokoro TTS (POST /api/tts -> audio/wav -> browser playback).
+        // Shared by the answer playback and the post-wake greeting.
+        async function playKokoroAudio(text, onFinished, onError) {
             const statusBox = document.getElementById('audioPlayerStatus');
             statusBox.classList.remove('hidden');
 
+            // Strip markdown special chars for clean TTS input.
+            const cleanText = text.replace(/[*_#`~\[\]]/g, '').trim();
+            if (!cleanText) {
+                statusBox.classList.add('hidden');
+                if (onError) onError();
+                return;
+            }
+
             try {
-                // Strip markdown special chars for clean TTS input
-                const cleanText = text.replace(/[*_#`~\[\]]/g, '').slice(0, 400);
-
-                const payload = {
-                    contents: [{
-                        parts: [{ text: `Say clearly and politely in a helpful tone: ${cleanText}` }]
-                    }],
-                    generationConfig: {
-                        responseModalities: ["AUDIO"],
-                        speechConfig: {
-                            voiceConfig: {
-                                prebuiltVoiceConfig: { voiceName: "Kore" }
-                            }
-                        }
-                    },
-                    model: "gemini-2.5-flash-preview-tts"
-                };
-
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
-                const response = await fetch(apiUrl, {
+                const res = await fetchWithTimeout('/api/tts', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
+                    body: JSON.stringify({ text: cleanText, voice: KOKORO_VOICE, speed: KOKORO_SPEED })
+                }, 30000);
 
-                const result = await response.json();
-                const part = result?.candidates?.[0]?.content?.parts?.[0];
-                const audioData = part?.inlineData?.data;
-                const mimeType = part?.inlineData?.mimeType;
-
-                if (audioData && mimeType) {
-                    const sampleRateMatch = mimeType.match(/rate=(\d+)/);
-                    const sampleRate = sampleRateMatch ? parseInt(sampleRateMatch[1], 10) : 24000;
-                    
-                    const pcm16Data = base64ToInt16Array(audioData);
-                    const wavBlob = pcmToWavBlob(pcm16Data, sampleRate);
-                    const audioUrl = URL.createObjectURL(wavBlob);
-
-                    currentAudio = new Audio(audioUrl);
-                    currentAudio.onended = () => {
-                        statusBox.classList.add('hidden');
-                    };
-                    currentAudio.play();
-                } else {
-                    fallbackBrowserSpeech(cleanText);
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || 'Kokoro TTS failed (' + res.status + ').');
                 }
+
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio(url);
+                audio._objectUrl = url;
+                const finishPlayback = () => {
+                    if (audio._objectUrl) {
+                        URL.revokeObjectURL(audio._objectUrl);
+                        audio._objectUrl = null;
+                    }
+                    if (currentAudio === audio) currentAudio = null;
+                    statusBox.classList.add('hidden');
+                    stopMicUI();
+                };
+
+                currentAudio = audio;
+                audio.onended = () => {
+                    finishPlayback();
+                    if (onFinished) onFinished();
+                };
+                audio.onerror = () => {
+                    finishPlayback();
+                    if (onError) onError('Audio playback failed.');
+                };
+
+                await audio.play().catch(() => {
+                    finishPlayback();
+                    if (onError) onError('Audio playback could not start.');
+                });
             } catch (err) {
-                console.warn("Gemini TTS fallback to SpeechSynthesis:", err);
-                fallbackBrowserSpeech(text.replace(/[*_#`~\[\]]/g, '').slice(0, 300));
+                console.error('Kokoro TTS error:', err);
+                statusBox.classList.add('hidden');
+                if (onError) onError(err && err.timedOut ? 'TTS server timed out.' : (err && err.message ? err.message : 'Voice playback error.'));
             }
         }
 
-        function fallbackBrowserSpeech(cleanText) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(cleanText);
-                utterance.rate = 1.0;
-                utterance.onend = () => {
-                    document.getElementById('audioPlayerStatus').classList.add('hidden');
-                };
-                window.speechSynthesis.speak(utterance);
-            } else {
-                document.getElementById('audioPlayerStatus').classList.add('hidden');
-            }
+        async function speakResponseText(text) {
+            stopAudio(); // must run before setVoiceState('speaking')
+            if (wakeWordActive) setVoiceState('speaking');
+            await playKokoroAudio(text, () => {
+                // After audio.onended, wait then restart wake-word listening.
+                if (wakeWordActive) endVoiceTurn();
+            }, (reason) => {
+                if (wakeWordActive) endVoiceTurn(reason || 'Voice playback error.');
+            });
+        }
+
+        // Greeting spoken after a wake-word-only detection; then question listening.
+        function speakGreeting(onFinished) {
+            stopAudio(); // ensure no previous audio keeps playing
+            if (wakeWordActive) setVoiceState('greeting');
+            playKokoroAudio(GREETING_TEXT, () => {
+                if (wakeWordActive) onFinished();
+            }, () => {
+                if (wakeWordActive) onFinished();
+            });
         }
 
         function stopAudio() {
             if (currentAudio) {
                 currentAudio.pause();
+                if (currentAudio._objectUrl) {
+                    URL.revokeObjectURL(currentAudio._objectUrl);
+                }
                 currentAudio = null;
             }
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-            }
-            document.getElementById('audioPlayerStatus').classList.add('hidden');
-        }
-
-        // Helper: Convert Base64 PCM16 to Int16Array
-        function base64ToInt16Array(base64) {
-            const binaryString = atob(base64);
-            const len = binaryString.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            return new Int16Array(bytes.buffer);
-        }
-
-        // Helper: Convert Int16 PCM array into playable WAV Blob
-        function pcmToWavBlob(pcm16Array, sampleRate) {
-            const numChannels = 1;
-            const bytesPerSample = 2;
-            const blockAlign = numChannels * bytesPerSample;
-            const byteRate = sampleRate * blockAlign;
-            const dataSize = pcm16Array.length * bytesPerSample;
-            const buffer = new ArrayBuffer(44 + dataSize);
-            const view = new DataView(buffer);
-
-            /* RIFF identifier */
-            writeString(view, 0, 'RIFF');
-            /* RIFF chunk length */
-            view.setUint32(4, 36 + dataSize, true);
-            /* RIFF type */
-            writeString(view, 8, 'WAVE');
-            /* format chunk identifier */
-            writeString(view, 12, 'fmt ');
-            /* format chunk length */
-            view.setUint32(16, 16, true);
-            /* sample format (1 is PCM) */
-            view.setUint16(20, 1, true);
-            /* channel count */
-            view.setUint16(22, numChannels, true);
-            /* sample rate */
-            view.setUint32(24, sampleRate, true);
-            /* byte rate */
-            view.setUint32(28, byteRate, true);
-            /* block align */
-            view.setUint16(32, blockAlign, true);
-            /* bits per sample */
-            view.setUint16(34, 16, true);
-            /* data chunk identifier */
-            writeString(view, 36, 'data');
-            /* data chunk length */
-            view.setUint32(40, dataSize, true);
-
-            // Write PCM audio samples
-            let offset = 44;
-            for (let i = 0; i < pcm16Array.length; i++, offset += 2) {
-                view.setInt16(offset, pcm16Array[i], true);
-            }
-
-            return new Blob([buffer], { type: 'audio/wav' });
-        }
-
-        function writeString(view, offset, string) {
-            for (let i = 0; i < string.length; i++) {
-                view.setUint8(offset + i, string.charCodeAt(i));
+            const statusBox = document.getElementById('audioPlayerStatus');
+            statusBox.classList.add('hidden');
+            // If the voice assistant was speaking, return it to wake-word listening.
+            if (wakeWordActive && voiceState === 'speaking') {
+                scheduleVoice(() => { if (wakeWordActive) startWakeRecognition(); }, VOICE_RESTART_MS);
             }
         }
 

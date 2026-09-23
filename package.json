@@ -1,0 +1,20 @@
+{
+  "name": "chatbot-for-college",
+  "version": "1.0.0",
+  "description": "Secure local Express backend for the MRDU AI Campus Assistant (frontend: Chatbot_for_College-main/coll.html)",
+  "private": true,
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.0",
+    "express": "^5.2.1"
+  }
+}
